@@ -12,8 +12,8 @@ describe('ToastDemo', () => {
       </>
     )
     const button = screen.getByRole('button')
-    userEvent.setup()
-    await userEvent.click(button)
+    const user = userEvent.setup()
+    await user.click(button)
     const toast = await screen.findByText(/success/i)
     expect(toast).toBeInTheDocument()
   })
