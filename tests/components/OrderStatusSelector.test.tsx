@@ -10,7 +10,11 @@ describe('OrderStatusSelector', () => {
         <OrderStatusSelector onChange={vi.fn()} />
       </Theme>
     )
-    return { button: screen.getByRole('combobox') }
+    return {
+      button: screen.getByRole('combobox'),
+      //lazy evaluation
+      getOptions: () => screen.findAllByRole('option'),
+    }
   }
   it('should render correctly with initial state', () => {
     const { button } = renderComponent()
@@ -18,12 +22,12 @@ describe('OrderStatusSelector', () => {
     expect(button).toHaveTextContent(/new/i)
   })
   it('should render correct statuses', async () => {
-    const { button } = renderComponent()
+    const { button, getOptions } = renderComponent()
 
     const user = userEvent.setup()
     await user.click(button)
 
-    const options = await screen.findAllByRole('option')
+    const options = await getOptions()
     expect(options).toHaveLength(3)
     const labels = options.map((option) => option.textContent)
     expect(labels).toEqual(['New', 'Processed', 'Fulfilled'])
