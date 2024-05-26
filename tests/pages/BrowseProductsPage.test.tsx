@@ -16,8 +16,11 @@ describe('BrowseProductsPage', () => {
   const products: Product[] = []
   beforeAll(() => {
     ;[1, 2].forEach((item) => {
-      categories.push(db.category.create({ name: 'Category ' + item }))
-      products.push(db.product.create())
+      const category = db.category.create({ name: 'Category ' + item })
+      categories.push(category)
+      ;[(1, 2)].forEach(() => {
+        products.push(db.product.create({ categoryId: category.id }))
+      })
     })
   })
   afterAll(() => {
@@ -51,6 +54,7 @@ describe('BrowseProductsPage', () => {
       getCategoriesSkeleton: () =>
         screen.getByRole('progressbar', { name: /categories/i }),
       getCategoriesCombobox: () => screen.queryByRole('combobox'),
+      user: userEvent.setup(),
     }
   }
   it('should show a loading skeleton when fetching categories ', () => {
@@ -89,8 +93,8 @@ describe('BrowseProductsPage', () => {
   })
 
   it('should render categories after fetching them', async () => {
-    const user = userEvent.setup()
-    const { getCategoriesSkeleton, getCategoriesCombobox } = renderComponent()
+    const { getCategoriesSkeleton, getCategoriesCombobox, user } =
+      renderComponent()
     await waitForElementToBeRemoved(getCategoriesSkeleton)
     const combobox = getCategoriesCombobox()
     expect(combobox).toBeInTheDocument()
@@ -109,6 +113,55 @@ describe('BrowseProductsPage', () => {
     const { getProductsSkeleton } = renderComponent()
 
     await waitForElementToBeRemoved(getProductsSkeleton)
+    products.forEach((product) => {
+      expect(screen.getByText(product.name)).toBeInTheDocument()
+    })
+  })
+
+  it('should filter products by category', async () => {
+    const { getCategoriesCombobox, getCategoriesSkeleton, user } =
+      renderComponent()
+
+    await waitForElementToBeRemoved(getCategoriesSkeleton)
+    const combobox = getCategoriesCombobox()
+    await user.click(combobox!)
+
+    const selectedCategory = categories[0]
+    const option = screen.getByRole('option', { name: selectedCategory.name })
+    await user.click(option)
+
+    const products = db.product.findMany({
+      where: {
+        categoryId: { equals: selectedCategory.id },
+      },
+    })
+
+    const rows = screen.getAllByRole('row')
+    const dataRows = rows.slice(1)
+    expect(dataRows).toHaveLength(products.length)
+
+    products.forEach((product) => {
+      expect(screen.getByText(product.name)).toBeInTheDocument()
+    })
+  })
+
+  it('should render all products if category all is selected', async () => {
+    const { getCategoriesCombobox, getCategoriesSkeleton, user } =
+      renderComponent()
+
+    await waitForElementToBeRemoved(getCategoriesSkeleton)
+    const combobox = getCategoriesCombobox()
+    await user.click(combobox!)
+
+    const option = screen.getByRole('option', { name: /all/i })
+    await user.click(option)
+
+    const products = db.product.getAll()
+
+    const rows = screen.getAllByRole('row')
+    const dataRows = rows.slice(1)
+    expect(dataRows).toHaveLength(products.length)
+
     products.forEach((product) => {
       expect(screen.getByText(product.name)).toBeInTheDocument()
     })
