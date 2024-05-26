@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { products } from './data'
 
 export const handlers = [
   http.get('/categories', () => {
@@ -9,10 +10,15 @@ export const handlers = [
     ])
   }),
   http.get('/products', () => {
-    return HttpResponse.json([
-      { id: 1, name: 'Product1' },
-      { id: 2, name: 'Product2' },
-      { id: 3, name: 'Product3' },
-    ])
+    return HttpResponse.json(products)
+  }),
+  http.get('/products/:id', ({ params }) => {
+    const id = params.id as string
+    const product = products.find((product) => product.id === parseInt(id))
+
+    if (!product) {
+      return new HttpResponse(null, { status: 404 })
+    }
+    return HttpResponse.json(product)
   }),
 ]
