@@ -10,21 +10,15 @@ import AllProviders from '../AllProviders'
 import { db } from '../mocks/db'
 
 describe('ProductForm', () => {
-  const categories: Category[] = []
+  let category: Category
 
   beforeAll(() => {
-    ;[1, 2].forEach((item) => {
-      const category = db.category.create({ name: 'Category ' + item })
-      categories.push(category)
-    })
+    category = db.category.create()
   })
+
   afterAll(() => {
-    db.category.deleteMany({
-      where: {
-        id: {
-          in: categories.map((category) => category.id),
-        },
-      },
+    db.category.delete({
+      where: { id: { equals: category.id } },
     })
   })
 
@@ -51,7 +45,9 @@ describe('ProductForm', () => {
 
         const name = screen.getByPlaceholderText(/name/i)
         const price = screen.getByPlaceholderText(/price/i)
-        const category = screen.getByRole('combobox', { name: /category/i })
+        const categoryInput = screen.getByRole('combobox', {
+          name: /category/i,
+        })
         const submitButton = screen.getByRole('button', { name: /submit/i })
 
         type FormData = {
@@ -62,7 +58,7 @@ describe('ProductForm', () => {
           name: 'Product 1',
           price: 100,
           id: 1,
-          categoryId: categories[0].id,
+          categoryId: category.id,
         }
         const fill = async (product: FormData) => {
           if (product.name !== undefined) await user.type(name, product.name)
@@ -71,7 +67,7 @@ describe('ProductForm', () => {
             await user.type(price, product.price.toString())
 
           await user.tab()
-          await user.click(category)
+          await user.click(categoryInput)
           const options = screen.getAllByRole('option')
           await user.click(options[0])
           await user.click(submitButton)
@@ -80,7 +76,7 @@ describe('ProductForm', () => {
         return {
           name,
           price,
-          category,
+          categoryInput,
           submitButton,
           fill,
           validData,
@@ -91,10 +87,10 @@ describe('ProductForm', () => {
   }
   it('should render form fields', async () => {
     const { waitFoFormToLoad } = renderComponent()
-    const { name, price, category } = await waitFoFormToLoad()
+    const { name, price, categoryInput } = await waitFoFormToLoad()
     expect(name).toBeInTheDocument()
     expect(price).toBeInTheDocument()
-    expect(category).toBeInTheDocument()
+    expect(categoryInput).toBeInTheDocument()
   })
   it('should render categories after fetching them', async () => {
     const { waitFoFormToLoad } = renderComponent()
@@ -105,13 +101,11 @@ describe('ProductForm', () => {
     expect(combobox).toBeInTheDocument()
     await user.click(combobox!)
 
-    categories.forEach((category) => {
-      expect(
-        screen.getByRole('option', {
-          name: category.name,
-        })
-      ).toBeInTheDocument()
-    })
+    expect(
+      screen.getByRole('option', {
+        name: category.name,
+      })
+    ).toBeInTheDocument()
   })
 
   it('should populate form fields when editing a product', async () => {
@@ -119,14 +113,14 @@ describe('ProductForm', () => {
       id: 1,
       name: 'Product 1',
       price: 100,
-      categoryId: categories[0].id,
+      categoryId: category.id,
     }
     const { waitFoFormToLoad } = renderComponent(product)
 
-    const { name, price, category } = await waitFoFormToLoad()
+    const { name, price, categoryInput } = await waitFoFormToLoad()
     expect(name).toHaveValue(product.name)
     expect(price).toHaveValue(product.price.toString())
-    expect(category).toHaveTextContent(categories[0].name)
+    expect(categoryInput).toHaveTextContent(category.name)
   })
   it('should put focus on the name field', async () => {
     const { waitFoFormToLoad } = renderComponent()
@@ -202,5 +196,61 @@ describe('ProductForm', () => {
 
     const toast = await screen.findByRole('status')
     expect(toast).toHaveTextContent(/error/i)
+  })
+  it('should disable the submit button upon submission', async () => {
+    const { waitFoFormToLoad, onSubmit } = renderComponent()
+    onSubmit.mockReturnValue(new Promise(() => {}))
+
+    const form = await waitFoFormToLoad()
+    await form.fill(form.validData)
+
+    expect(form.submitButton).toBeDisabled()
+  })
+
+  it('should re-enable submit button after submission', async () => {
+    const { waitFoFormToLoad, onSubmit } = renderComponent()
+    onSubmit.mockResolvedValue({})
+
+    const form = await waitFoFormToLoad()
+    await form.fill(form.validData)
+
+    expect(form.submitButton).not.toBeDisabled()
+  })
+  it('should re-enable submit button if submission fails', async () => {
+    const { waitFoFormToLoad, onSubmit } = renderComponent()
+    onSubmit.mockRejectedValue('error')
+
+    const form = await waitFoFormToLoad()
+    await form.fill(form.validData)
+
+    expect(form.submitButton).not.toBeDisabled()
+  })
+  // it('should throw an error if name field is filled with empty space', async () => {
+  //   const { waitFoFormToLoad } = renderComponent()
+
+  //   const form = await waitFoFormToLoad()
+  //   await form.fill({ ...form.validData, name: ' ' })
+
+  //   const toast = await screen.findByRole('status')
+  //   expect(toast).toHaveTextContent(/error/i)
+  // })
+  // it('should throw an error if category is not selected', async () => {
+  //   const { waitFoFormToLoad, expectErrorToBeInTheDocument } = renderComponent()
+
+  //   const form = await waitFoFormToLoad()
+
+  //   await form.fill({ ...form.validData, categoryId: null })
+
+  //   expectErrorToBeInTheDocument(/erro/i)
+  // })
+  it('should reset form after submission', async () => {
+    const { waitFoFormToLoad } = renderComponent()
+
+    const form = await waitFoFormToLoad()
+
+    await form.fill(form.validData)
+
+    expect(form.name).toHaveValue('')
+    expect(form.price).toHaveValue('')
   })
 })

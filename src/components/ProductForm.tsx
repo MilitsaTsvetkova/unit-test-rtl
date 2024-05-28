@@ -25,6 +25,7 @@ const ProductForm = ({ product, onSubmit }: Props) => {
     handleSubmit,
     control,
     formState: { errors },
+    reset,
   } = useForm<ProductFormData>({
     defaultValues: product,
     resolver: zodResolver(productFormSchema),
@@ -39,6 +40,7 @@ const ProductForm = ({ product, onSubmit }: Props) => {
         try {
           setSubmitting(true)
           await onSubmit(formData)
+          reset()
         } catch (error) {
           toast.error('An unexpected error occurred')
         } finally {
