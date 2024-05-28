@@ -1,22 +1,13 @@
 import { Select } from '@radix-ui/themes'
-import axios from 'axios'
 import Skeleton from 'react-loading-skeleton'
-import { useQuery } from 'react-query'
-import { Category } from '../entities'
+import useCategories from '../hooks/useCategories'
 
 interface Props {
   onChange: (categoryId: number) => void
 }
 
 const CategorySelect = ({ onChange }: Props) => {
-  const {
-    isLoading,
-    error,
-    data: categories,
-  } = useQuery<Category[], Error>({
-    queryKey: ['categories'],
-    queryFn: () => axios.get<Category[]>('/categories').then((res) => res.data),
-  })
+  const { isLoading, error, data: categories } = useCategories()
 
   if (isLoading)
     return (

@@ -1,24 +1,24 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Box, Button, Select, TextField } from "@radix-ui/themes";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { Product } from "../entities";
-import useCategories from "../hooks/useCategories";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Box, Button, Select, TextField } from '@radix-ui/themes'
+import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
+import { Product } from '../entities'
+import useCategories from '../hooks/useCategories'
 import {
   ProductFormData,
   productFormSchema,
-} from "../validationSchemas/productSchema";
-import ErrorMessage from "./ErrorMessage";
+} from '../validationSchemas/productSchema'
+import ErrorMessage from './ErrorMessage'
 
 interface Props {
-  product?: Product;
-  onSubmit: (product: ProductFormData) => Promise<void>;
+  product?: Product
+  onSubmit: (product: ProductFormData) => Promise<void>
 }
 
 const ProductForm = ({ product, onSubmit }: Props) => {
-  const { data: categories, isLoading } = useCategories();
-  const [isSubmitting, setSubmitting] = useState(false);
+  const { data: categories, isLoading } = useCategories()
+  const [isSubmitting, setSubmitting] = useState(false)
 
   const {
     register,
@@ -28,54 +28,59 @@ const ProductForm = ({ product, onSubmit }: Props) => {
   } = useForm<ProductFormData>({
     defaultValues: product,
     resolver: zodResolver(productFormSchema),
-  });
+  })
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>
 
   return (
     <form
-      name="product"
+      name='product'
       onSubmit={handleSubmit(async (formData) => {
         try {
-          setSubmitting(true);
-          await onSubmit(formData);
+          setSubmitting(true)
+          await onSubmit(formData)
         } catch (error) {
-          toast.error("An unexpected error occurred");
+          toast.error('An unexpected error occurred')
         } finally {
-          setSubmitting(false);
+          setSubmitting(false)
         }
       })}
-      className="space-y-3"
+      className='space-y-3'
     >
       <Box>
-        <TextField.Root className="max-w-sm">
-          <TextField.Input placeholder="Name" {...register("name")} size="3" />
+        <TextField.Root className='max-w-sm'>
+          <TextField.Input
+            placeholder='Name'
+            {...register('name')}
+            size='3'
+            autoFocus
+          />
         </TextField.Root>
         <ErrorMessage error={errors.name} />
       </Box>
       <Box>
-        <TextField.Root className="w-24">
+        <TextField.Root className='w-24'>
           <TextField.Slot>$</TextField.Slot>
           <TextField.Input
-            placeholder="Price"
+            placeholder='Price'
             maxLength={5}
-            size="3"
-            {...register("price", { valueAsNumber: true })}
+            size='3'
+            {...register('price', { valueAsNumber: true })}
           />
         </TextField.Root>
         <ErrorMessage error={errors.price} />
       </Box>
       <Box>
         <Controller
-          name="categoryId"
+          name='categoryId'
           control={control}
           render={({ field }) => (
             <Select.Root
-              size="3"
-              defaultValue={product?.categoryId.toString() || ""}
+              size='3'
+              defaultValue={product?.categoryId.toString() || ''}
               onValueChange={(value) => field.onChange(+value)}
             >
-              <Select.Trigger placeholder="Category" />
+              <Select.Trigger placeholder='Category' aria-label='Category' />
               <Select.Content>
                 <Select.Group>
                   {categories?.map((category) => (
@@ -93,11 +98,11 @@ const ProductForm = ({ product, onSubmit }: Props) => {
         />
         <ErrorMessage error={errors.categoryId} />
       </Box>
-      <Button size="3" disabled={isSubmitting}>
+      <Button size='3' disabled={isSubmitting}>
         Submit
       </Button>
     </form>
-  );
-};
+  )
+}
 
-export default ProductForm;
+export default ProductForm
