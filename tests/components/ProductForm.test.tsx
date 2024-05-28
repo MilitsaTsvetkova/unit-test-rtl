@@ -225,24 +225,7 @@ describe('ProductForm', () => {
 
     expect(form.submitButton).not.toBeDisabled()
   })
-  // it('should throw an error if name field is filled with empty space', async () => {
-  //   const { waitFoFormToLoad } = renderComponent()
 
-  //   const form = await waitFoFormToLoad()
-  //   await form.fill({ ...form.validData, name: ' ' })
-
-  //   const toast = await screen.findByRole('status')
-  //   expect(toast).toHaveTextContent(/error/i)
-  // })
-  // it('should throw an error if category is not selected', async () => {
-  //   const { waitFoFormToLoad, expectErrorToBeInTheDocument } = renderComponent()
-
-  //   const form = await waitFoFormToLoad()
-
-  //   await form.fill({ ...form.validData, categoryId: null })
-
-  //   expectErrorToBeInTheDocument(/erro/i)
-  // })
   it('should reset form after submission', async () => {
     const { waitFoFormToLoad } = renderComponent()
 
