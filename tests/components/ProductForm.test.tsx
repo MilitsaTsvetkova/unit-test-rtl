@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Toaster } from 'react-hot-toast'
 import ProductForm from '../../src/components/ProductForm'
 import { Category, Product } from '../../src/entities'
 import AllProviders from '../AllProviders'
@@ -28,11 +29,18 @@ describe('ProductForm', () => {
   })
 
   const renderComponent = (product?: Product) => {
-    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
-      wrapper: AllProviders,
-    })
+    const onSubmit = vi.fn()
+    render(
+      <>
+        <ProductForm product={product} onSubmit={onSubmit} /> <Toaster />
+      </>,
+      {
+        wrapper: AllProviders,
+      }
+    )
     const user = userEvent.setup()
     return {
+      onSubmit,
       expectErrorToBeInTheDocument: (errorMessage: RegExp) => {
         const error = screen.getByRole('alert')
         expect(error).toBeInTheDocument()
@@ -175,4 +183,24 @@ describe('ProductForm', () => {
       expectErrorToBeInTheDocument(errorMessage)
     }
   )
+
+  it('should call onSubmit with the correct data', async () => {
+    const { waitFoFormToLoad, onSubmit } = renderComponent()
+
+    const form = await waitFoFormToLoad()
+    await form.fill(form.validData)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment
+    const { id, ...rest } = form.validData
+    expect(onSubmit).toHaveBeenCalledWith(rest)
+  })
+  it('should display a toast if submission fails', async () => {
+    const { waitFoFormToLoad, onSubmit } = renderComponent()
+    onSubmit.mockRejectedValueOnce(new Error('An unexpected error occurred'))
+
+    const form = await waitFoFormToLoad()
+    await form.fill(form.validData)
+
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveTextContent(/error/i)
+  })
 })
