@@ -3,11 +3,12 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import routes from '../src/routes'
 import { db } from './mocks/db'
 
+export const navigateTo = (path: string) => {
+  const router = createMemoryRouter(routes, { initialEntries: [path] })
+  render(<RouterProvider router={router} />)
+}
+
 describe('Router', () => {
-  const navigateTo = (path: string) => {
-    const router = createMemoryRouter(routes, { initialEntries: [path] })
-    render(<RouterProvider router={router} />)
-  }
   it('should render home page for the root route /', () => {
     navigateTo('/')
     expect(screen.getByRole('heading', { name: /home/i })).toBeInTheDocument()
@@ -31,5 +32,9 @@ describe('Router', () => {
   it('should render the  not found page for invalid routes', () => {
     navigateTo('/test')
     expect(screen.getByText(/not found/i)).toBeInTheDocument()
+  })
+  it('should render the admin home page for /admin', () => {
+    navigateTo('/admin')
+    expect(screen.getByRole('heading', { name: /admin/i })).toBeInTheDocument()
   })
 })
